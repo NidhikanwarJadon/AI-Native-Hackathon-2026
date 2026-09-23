@@ -17,11 +17,18 @@ endpoint call drift the moment the backend changes a parameter, and the bug surf
 the two screens.
 
 Never call Axios from a component, hook, or thunk. The only axios import in the app is in
-`setup/client.ts` — that is what guarantees every request gets the base URL, the auth header, and
-the refresh retry.
+`setup/client.ts` — that is what guarantees every request gets the base URL, the auth header, the
+refresh retry, and sanitized input.
 
 Because `useFetchAPI` inspects the response status itself, an api function used for reads returns
 the whole response rather than pre-unwrapping it.
+
+**Sanitization is global, not per-field.** `setup/client.ts`'s request interceptor runs every plain
+request body and query-param object through `utility/sanitize.ts`'s `sanitizeInput` before it goes
+out — module code never calls it itself. `sanitizeInput` trims every string and strips `<script>`
+tags, with no exception for any field name, including a password: a value typed with leading or
+trailing whitespace reaches the API trimmed. A request body that's a `FormData` (a file upload) is
+left untouched instead — sanitizing one would silently replace it with `{}`.
 
 ## 2. `useFetchAPI` — the shared read hook
 
@@ -95,7 +102,18 @@ typechecker.
 attempted location — then permissions, redirecting to the unauthorized screen when the required
 permissions are not all present.
 
-## 5. CSS
+## 5. CSS — layout only
+
+**Module CSS files carry layout and nothing else**: positioning, flex/grid, width, spacing,
+alignment. Colours, radii, fonts, control heights and shadows come from the antd theme in
+`setup/theme.ts`, which is the single source of truth for the app's look — antd derives ten shades
+from `colorPrimary` alone, so the brand colour is a one-line edit there.
+
+A `background:`, `border-radius:` or `color:` on an antd component in a module's CSS is the smell to
+watch for: it duplicates a token locally and drifts from every other screen the moment the theme
+changes. When a value genuinely is needed in CSS, read the token rather than retyping the hex —
+`setup/theme.ts` sets `cssVar: true`, so antd publishes them as `var(--ant-color-primary)`,
+`var(--ant-color-bg-layout)` and so on.
 
 A `css/` subfolder sibling to `forms/`, `lists/`, `modalPopup/`. One file per component, named
 lowercase-first after the component — a component named `FooForm` gets `css/fooForm.css` —
@@ -111,15 +129,28 @@ values, typed with that same inferred type. The schema is also the DTO, so never
 that duplicates it and never inline a validation rule in a component — either one means the request
 type and the validation can disagree with nothing to catch it.
 
-The form is presentational: it takes the initial values, a submitting flag and a submit callback as
-props, and contains no dispatch and no fetching. The modal owns the dispatch — it reads the selected
-record and the save status from the slice, renders the form, dispatches the save thunk on submit,
-and on success toasts, resets the slice and closes. That split is what makes the form reusable on a
-full-page route.
+When a module has a list, the form stays presentational: it takes the initial values, a submitting
+flag and a submit callback as props, and contains no dispatch and no fetching. The modal owns the
+dispatch — it reads the selected record and the save status from the slice, renders the form,
+dispatches the save thunk on submit, and on success toasts, resets the slice and closes. That split
+is what makes the form reusable on a full-page route.
 
-antd renders errors via `validateStatus` / `help`, reading Formik's touched and errors maps. antd's
-own `rules` prop and `required` flag stay unused — two validation systems on one field is how you
-get a form that blocks submit with no visible error.
+**When a form has no list or modal — it's a full standalone screen**, like a login or a settings
+page: the form component owns the dispatch, the layout and any navigation itself, and there is no
+separate page-level wrapper. A wrapper whose only job is to import the form and render it adds a
+file and a layer without adding a role; the split only earns its keep when a modal is genuinely a
+second consumer of the same form.
+
+**The form element is Formik's own `<Form>`**, not antd's. Wrap the fields in `<Formik
+initialValues={...} validationSchema={toFormikValidationSchema(schema)} onSubmit={...}>`, and
+render Formik's `<Form>` inside it — it is a plain `<form>` already wired to Formik's submit
+handling, so it takes no `onFinish`. antd supplies only the field-level chrome: each field is a
+`<Field name="...">{({ field, meta }) => (...)}</Field>` render prop, with antd's `Form.Item`
+(import it aliased, e.g. `Form as AntForm`, since `Form` already names Formik's) giving the label
+and the `validateStatus` / `help` pair driven by `meta.touched` / `meta.error`, and antd's `Input`
+(or another control) spread with `{...field}`. antd's own `rules` prop and `required` flag stay
+unused — two validation systems on one field is how you get a form that blocks submit with no
+visible error.
 
 Every Zod error message comes from the validation keys in `enTranslation`, never a string literal.
 

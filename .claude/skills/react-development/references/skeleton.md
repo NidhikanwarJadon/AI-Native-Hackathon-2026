@@ -9,7 +9,9 @@ The rule governing each of them is in [conventions.md](conventions.md).
 
 | What you need | Where it is | What it gives you |
 |---|---|---|
-| HTTP client | `src/setup/client.ts` | the configured Axios instance (default export) — base URL, bearer header, one-shot 401 refresh and replay |
+| HTTP client | `src/setup/client.ts` | the configured Axios instance (default export) — base URL, bearer header, one-shot 401 refresh and replay, and every request body/query sanitized automatically |
+| Input sanitization | `src/utility/sanitize.ts` | `sanitizeInput` — trims strings and strips `<script>` tags, recursively. Already wired into `setup/client.ts`'s request interceptor; feature module code never calls it directly |
+| The app's look | `src/setup/theme.ts` | the antd `ThemeConfig` — colours, radii, type, control height. Every visual value lives here, not in module CSS; `cssVar: true` publishes them as `var(--ant-*)` for the rare case CSS needs one |
 | URL registry | `src/api/endpoints.ts` | the `ENDPOINTS` object — the only place a URL string is written |
 | Data fetching | `src/hooks/useFetchAPI.ts` | the shared read hook (default export) |
 | HTTP status codes | `src/utility/apiStatus.ts` | `API_STATUS` (default export) — the response codes `useFetchAPI` compares against |
