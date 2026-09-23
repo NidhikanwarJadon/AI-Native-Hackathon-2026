@@ -1,0 +1,44 @@
+/* Layout only. Colours, radii, type and control sizing all come from the
+   antd theme in setup/theme.ts. */
+
+.authPage-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.authPage-card {
+  width: 100%;
+  max-width: 420px;
+  /* Value lives in setup/theme.ts; referenced here, never retyped. */
+  box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+.authPage-title {
+  text-align: center;
+  margin-bottom: 24px !important;
+}
+
+.authPage-alert {
+  margin-bottom: 16px;
+}
+
+/* The last field before the footer links — drops the form's usual bottom
+   margin so the gap under the button matches the gap above it. */
+.authPage-submitItem {
+  margin-bottom: 0 !important;
+}
+
+.authPage-footerLink {
+  text-align: center;
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .authPage-container {
+    padding: 16px;
+  }
+}
