@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// The shared data-fetching hook: every read call in the app goes through it.
-// `any` is tolerated here because this is a generic utility wrapping arbitrary
-// endpoints — the no-any rule still applies to feature module code.
 import { useEffect, useState } from 'react';
 import { showToastError, showToastSuccess } from '../utility/common';
 import API_STATUS from '../utility/apiStatus';
@@ -9,7 +6,10 @@ import { useAppSelector } from '../setup/store';
 
 interface Props {
   accessPath?: string[];
-  apiFunction: (params: Record<string, any>) => Promise<any>;
+  // `any`, not `Record<string, any>` — a typed api function like
+  // `(payload: LoginRequest) => Promise<...>` isn't assignable to a param
+  // type requiring specific named properties, under strictFunctionTypes.
+  apiFunction: (params: any) => Promise<any>;
   apiCallCondition: boolean | number | string;
   apiParams?: Record<string, any>;
   dependencyArray: any[];
@@ -22,8 +22,10 @@ interface Props {
   successMessage?: string;
 }
 
+// Return type is an explicit 1-tuple: with `noUncheckedIndexedAccess` on, an
+// inferred array type would make `useFetchAPI(...)[0]` come back as
+// `{...} | undefined`, which this never actually returns.
 const useFetchAPI = ({
-  // accessPath = [""],
   apiFunction = () => Promise.resolve({ data: {} }),
   apiCallCondition = false,
   apiParams = {},
@@ -35,7 +37,7 @@ const useFetchAPI = ({
   failureCb = () => {},
   errorMessage,
   successMessage,
-}: Props) => {
+}: Props): [{ data: any[]; isLoading: boolean; hasError: boolean }] => {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
   const [hasError, setError] = useState<boolean>(false);
@@ -47,9 +49,6 @@ const useFetchAPI = ({
       apiFunction(apiParams)
         .then((res) => {
           const resData = res?.data;
-          // const resData =
-          //   getDataFromObjectUsingPaths(res?.data, accessPath) ||
-          //   defaultResponseValue;
           if (res?.status == API_STATUS.SUCCESS) {
             setData(resData);
             setLoading(false);

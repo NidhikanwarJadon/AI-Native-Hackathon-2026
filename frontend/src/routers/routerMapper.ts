@@ -3,7 +3,7 @@ import type { RouteObject } from 'react-router-dom';
 import type { AppRoute } from './routeList';
 import { PrivateRoute } from './PrivateRoute';
 
-export function mapAppRoutes(appRoutes: AppRoute[]): RouteObject[] {
+export const mapAppRoutes = (appRoutes: AppRoute[]): RouteObject[] => {
   return appRoutes.map((route) => ({
     path: route.path,
     element: createElement(
@@ -12,4 +12,4 @@ export function mapAppRoutes(appRoutes: AppRoute[]): RouteObject[] {
       createElement(route.component),
     ),
   }));
-}
+};

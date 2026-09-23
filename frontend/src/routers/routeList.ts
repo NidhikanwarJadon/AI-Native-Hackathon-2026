@@ -10,6 +10,4 @@ export interface AppRoute {
   sidebarHighlightKey: SidebarKey;
 }
 
-// Each feature module contributes its own route array here, e.g.:
-//   export const routeList: AppRoute[] = [...userRoutes, ...ordersRoutes];
 export const routeList: AppRoute[] = [];

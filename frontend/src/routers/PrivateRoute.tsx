@@ -7,13 +7,10 @@ interface PrivateRouteProps {
   requiredPermissions: ScreenPermission[];
 }
 
-// Checks authentication first — no access token redirects to login, preserving
-// the attempted location — then permissions (empty array means any authenticated
-// user), redirecting to the unauthorized screen when a required permission is missing.
-export function PrivateRoute({
+export const PrivateRoute = ({
   requiredPermissions,
   children,
-}: PropsWithChildren<PrivateRouteProps>) {
+}: PropsWithChildren<PrivateRouteProps>) => {
   const location = useLocation();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
   const userPermissions = useAppSelector((state) => state.auth.permissions);
@@ -31,4 +28,4 @@ export function PrivateRoute({
   }
 
   return <>{children}</>;
-}
+};

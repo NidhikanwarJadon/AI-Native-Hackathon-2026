@@ -1,0 +1,27 @@
+/* App-wide baseline only. Everything else visual comes from the antd theme
+   in setup/theme.ts — module CSS files stay layout-only. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* antd's CSS variables are scoped to a class on its own elements, not to
+   :root, so the page background is read here rather than on <body>. */
+.ant-app {
+  min-height: 100%;
+  background: var(--ant-color-bg-layout);
+}
