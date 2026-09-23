@@ -5,4 +5,7 @@ export const ENDPOINTS = {
     login: '/auth/login',
     refresh: '/auth/refresh',
   },
+  users: {
+    list: '/users',
+  },
 };
