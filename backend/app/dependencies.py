@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from app.crud import user_crud
-from app.models.user_model import User
+from backend.app.crud import user_query
+from app.db.user_model import User
 
 # auto_error=False so a missing Authorization header reaches us and becomes a 401
 # (HTTPBearer's own default raises 403, which is the wrong answer for "no token").
@@ -49,7 +49,7 @@ def get_current_user(
     except (TypeError, ValueError):
         raise _CREDENTIALS_ERROR
 
-    user = user_crud.get_user(db, user_id)
+    user = user_query.get_user(db, user_id)
     if user is None:
         raise _CREDENTIALS_ERROR
 

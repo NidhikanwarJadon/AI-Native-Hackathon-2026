@@ -6,6 +6,6 @@ model missing from this list is invisible to migrations and can be silently
 dropped. Add new models to both the import and __all__ below.
 """
 
-from app.models.user_model import User
+from app.db.user_model import User
 
 __all__ = ["User"]

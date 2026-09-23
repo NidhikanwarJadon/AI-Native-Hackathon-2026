@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.core.config import settings
+from app.db.session import settings
 from app.routers import auth, users
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,7 @@ async def validation_exception_handler(
 # Routers carry their own /api prefix (see app/routers/*.py).
 app.include_router(auth.router)
 app.include_router(users.router)
+#ADD router registrations here.
 
 
 # The frontend build is optional: frontend/ is empty during backend development, and

@@ -12,7 +12,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models.user_model import User
+from app.db.user_model import User
 from app.schemas.user_schema import UserCreate, UserUpdate
 
 
