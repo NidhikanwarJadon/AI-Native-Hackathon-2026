@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from backend.app.crud import user_query
-from backend.app.crud.user_query import EmailAlreadyExistsError
+from app.crud import user_query
+from app.crud.user_query import EmailAlreadyExistsError
 from app.dependencies import get_current_user
 from app.db.user_model import User
 from app.schemas.user_schema import UserCreate, UserOut, UserUpdate

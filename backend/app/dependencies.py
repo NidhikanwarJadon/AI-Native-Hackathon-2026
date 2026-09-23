@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from backend.app.crud import user_query
+from app.crud import user_query
 from app.db.user_model import User
 
 # auto_error=False so a missing Authorization header reaches us and becomes a 401

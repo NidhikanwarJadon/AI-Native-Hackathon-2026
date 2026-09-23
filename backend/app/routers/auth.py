@@ -17,8 +17,8 @@ from app.core.security import (
     decode_access_token,
     password_fingerprint,
 )
-from backend.app.crud import user_query
-from backend.app.crud.user_query import EmailAlreadyExistsError
+from app.crud import user_query
+from app.crud.user_query import EmailAlreadyExistsError
 
 from app.db.session import settings
 from app.schemas.user_schema import (

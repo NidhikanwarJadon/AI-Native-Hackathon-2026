@@ -16,7 +16,7 @@ from app.core.database import Base
 # Import every model module here as it is created. A model that is never imported
 # is not registered on Base.metadata, and autogenerate will silently emit an empty
 # migration - or worse, propose dropping the table.
-import app.models  # noqa: F401  - registers every model on Base.metadata
+import app.db  # noqa: F401  - registers every model on Base.metadata
 
 config = context.config
 
