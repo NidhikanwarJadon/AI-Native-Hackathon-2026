@@ -3,6 +3,7 @@ export const enTranslation = {
     login: 'Log in',
     register: 'Create an account',
     forgotPassword: 'Forgot your password?',
+    users: 'Users',
   },
   labels: {
     email: 'Email',
@@ -12,6 +13,9 @@ export const enTranslation = {
     confirmPassword: 'Confirm password',
     noAccount: "Don't have an account?",
     haveAccount: 'Already have an account?',
+    userId: 'ID',
+    userName: 'Name',
+    userEmail: 'Email',
   },
   buttons: {
     login: 'Log in',
@@ -33,5 +37,6 @@ export const enTranslation = {
   },
   messages: {
     genericError: 'Something went wrong. Please try again.',
-  },
+    usersEmpty: 'No users found',
+  }
 };

@@ -5,4 +5,7 @@ export const ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     refresh: '/auth/refresh',
   },
+  users: {
+    list: '/users',
+  },
 };
