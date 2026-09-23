@@ -4,12 +4,14 @@ import useFetchAPI from '../../../hooks/useFetchAPI';
 import { login } from '../api/authApi';
 import { useAppDispatch } from '../../../setup/store';
 import { sessionStarted } from '../../../reducers/authReducer';
-import type { LoginRequest, AuthSessionResponse } from '../types/auth.types';
+import type { LoginRequest, LoginResponse } from '../types/auth.types';
 
 interface LocationState {
   from?: { pathname: string };
 }
 
+// All state and API-calling logic for the login screen lives here — the
+// component only renders.
 const useLogin = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -17,17 +19,14 @@ const useLogin = () => {
   const [submitPayload, setSubmitPayload] = useState<Partial<LoginRequest>>({});
 
   const handleLogin = (values: LoginRequest) => {
-    setSubmitPayload({
-      email: values.email.toLowerCase(),
-      password: values.password,
-    });
+    setSubmitPayload({ ...values });
   };
 
-  const successCb = (type: string, data: AuthSessionResponse) => {
+  const successCb = (type: string, data: LoginResponse) => {
     switch (type) {
       case 'login': {
         setSubmitPayload({});
-        dispatch(sessionStarted(data));
+        dispatch(sessionStarted({ accessToken: data.access_token }));
         const redirectTo = (location.state as LocationState | null)?.from?.pathname ?? '/';
         navigate(redirectTo, { replace: true });
         break;
@@ -38,6 +37,9 @@ const useLogin = () => {
   const failureCb = (type: string) => {
     switch (type) {
       case 'login': {
+        // The hook already toasts the failure (401 "Incorrect email or
+        // password", 403 "Inactive user"); just clear the payload so the
+        // next submit re-triggers the call.
         setSubmitPayload({});
         break;
       }
@@ -52,7 +54,7 @@ const useLogin = () => {
     defaultResponseValue: [],
     showSuccessMessage: false,
     hideErrorMesssage: false,
-    successCb: (data: AuthSessionResponse) => successCb('login', data),
+    successCb: (data: LoginResponse) => successCb('login', data),
     failureCb: () => failureCb('login'),
   });
 

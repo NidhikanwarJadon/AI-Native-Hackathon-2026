@@ -29,25 +29,14 @@ const RegisterForm = () => {
             {/* component={false} gives Form.Item the vertical-layout context
                 without rendering a second <form> inside Formik's. */}
             <AntForm component={false} layout="vertical">
-            <Field name="firstName">
+            <Field name="fullName">
               {({ field, meta }: FieldProps<string>) => (
                 <AntForm.Item
-                  label={enTranslation.labels.firstName}
+                  label={enTranslation.labels.fullName}
                   validateStatus={meta.touched && meta.error ? 'error' : ''}
                   help={meta.touched ? meta.error : undefined}
                 >
-                  <Input {...field} autoComplete="given-name" />
-                </AntForm.Item>
-              )}
-            </Field>
-            <Field name="lastName">
-              {({ field, meta }: FieldProps<string>) => (
-                <AntForm.Item
-                  label={enTranslation.labels.lastName}
-                  validateStatus={meta.touched && meta.error ? 'error' : ''}
-                  help={meta.touched ? meta.error : undefined}
-                >
-                  <Input {...field} autoComplete="family-name" />
+                  <Input {...field} autoComplete="name" />
                 </AntForm.Item>
               )}
             </Field>

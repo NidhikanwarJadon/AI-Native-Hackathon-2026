@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { showToastError, showToastSuccess } from '../utility/common';
-import API_STATUS from '../utility/apiStatus';
 import { useAppSelector } from '../setup/store';
+import API_STATUS from '../utility/apiStatus';
 
 interface Props {
   accessPath?: string[];
@@ -49,7 +49,12 @@ const useFetchAPI = ({
       apiFunction(apiParams)
         .then((res) => {
           const resData = res?.data;
-          if (res?.status == API_STATUS.SUCCESS) {
+          // Axios resolves every 2xx into this branch (it rejects anything
+          // else into .catch() below), and our API legitimately returns
+          // 200/201/202/204 depending on the endpoint — so "success" means
+          // any 2xx, not literally 200. A narrower check here silently
+          // treated a real 201 Created or 202 Accepted as a failure.
+          if (res?.status >= API_STATUS.SUCCESS) {
             setData(resData);
             setLoading(false);
             setError(false);
@@ -73,8 +78,6 @@ const useFetchAPI = ({
           setLoading(false);
           setError(true);
           failureCb?.(error);
-          const status = error.response?.status;
-          if ([API_STATUS.UNAUTHORIZED, API_STATUS.CONFLICT].includes(status)) return;
           const errorType = error?.response?.data?.error;
 
           if (!hideErrorMesssage) {

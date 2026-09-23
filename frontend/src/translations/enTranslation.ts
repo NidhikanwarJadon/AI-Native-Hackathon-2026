@@ -8,8 +8,7 @@ export const enTranslation = {
   labels: {
     email: 'Email',
     password: 'Password',
-    firstName: 'First name',
-    lastName: 'Last name',
+    fullName: 'Full name',
     confirmPassword: 'Confirm password',
     noAccount: "Don't have an account?",
     haveAccount: 'Already have an account?',
@@ -29,7 +28,7 @@ export const enTranslation = {
     emailTooLong: 'Email must be 254 characters or fewer',
     tooLong: 'Must be 100 characters or fewer',
     passwordTooShort: 'Password must be at least 8 characters',
-    passwordTooLong: 'Password must be 128 characters or fewer',
+    passwordTooLong: 'Password must be 72 characters or fewer',
     passwordNeedsLowercase: 'Password must include a lowercase letter',
     passwordNeedsUppercase: 'Password must include an uppercase letter',
     passwordNeedsNumber: 'Password must include a number',
@@ -38,5 +37,6 @@ export const enTranslation = {
   messages: {
     genericError: 'Something went wrong. Please try again.',
     usersEmpty: 'No users found',
+    registrationSucceeded: 'Account created. Log in to continue.',
   }
 };

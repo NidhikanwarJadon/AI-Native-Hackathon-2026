@@ -4,15 +4,16 @@ import type {
   LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
-  AuthSessionResponse,
+  LoginResponse,
+  RegisterResponse,
   ForgotPasswordResponse,
 } from '../types/auth.types';
 
-export const login = (payload: LoginRequest): Promise<AuthSessionResponse> =>
-  client.post<AuthSessionResponse>(ENDPOINTS.auth.login, payload).then((response) => response.data);
+export const login = (payload: LoginRequest): Promise<LoginResponse> =>
+  client.post<LoginResponse>(ENDPOINTS.auth.login, payload).then((response) => response.data);
 
-export const register = (payload: RegisterRequest): Promise<AuthSessionResponse> =>
-  client.post<AuthSessionResponse>(ENDPOINTS.auth.register, payload).then((response) => response.data);
+export const register = (payload: RegisterRequest): Promise<RegisterResponse> =>
+  client.post<RegisterResponse>(ENDPOINTS.auth.register, payload).then((response) => response.data);
 
 export const forgotPassword = (payload: ForgotPasswordRequest): Promise<ForgotPasswordResponse> =>
   client

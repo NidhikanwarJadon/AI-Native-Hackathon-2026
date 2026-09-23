@@ -3,41 +3,33 @@ import type { ScreenPermission } from '../constants/permissions';
 
 export interface AuthState {
   accessToken: string | null;
-  refreshToken: string | null;
+  // role/permissions: the backend has no role concept yet ("there is no role
+  // column yet", per backend/app/routers/users.py) — these stay at their
+  // initial values until it does. Kept as real fields (not removed) because
+  // useFetchAPI reads state.auth.role for every call's dependency array.
   role: string | null;
   permissions: ScreenPermission[];
 }
 
 const initialState: AuthState = {
   accessToken: null,
-  refreshToken: null,
   role: null,
   permissions: [],
 };
 
-interface RefreshedTokens {
+interface Session {
   accessToken: string;
-  refreshToken: string;
-}
-
-interface Session extends RefreshedTokens {
-  role: string;
-  permissions: ScreenPermission[];
 }
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAuthTokens: (state, action: PayloadAction<RefreshedTokens>) => {
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-    },
+    // Dispatched by useLogin on a successful call. The backend's login
+    // response is just { access_token, token_type } — no refresh token, no
+    // role/permissions — so this is all there is to store.
     sessionStarted: (state, action: PayloadAction<Session>) => {
       state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-      state.role = action.payload.role;
-      state.permissions = action.payload.permissions;
     },
     // setup/rootReducer.ts matches every dispatched action's type against
     // this one and, on a match, resets the entire store, not just auth.
@@ -45,5 +37,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAuthTokens, sessionStarted, logout } = authSlice.actions;
+export const { sessionStarted, logout } = authSlice.actions;
 export default authSlice.reducer;
