@@ -1,27 +1,51 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { ENDPOINTS } from '../api/endpoints';
 import { getBaseURL } from '../utility/getBaseURL';
-import { store } from './store';
+import { sanitizeInput } from '../utility/sanitize';
 import { setAuthTokens, logout } from '../reducers/authReducer';
+import type { AppDispatch, RootState } from './store';
 
-// The only place axios is imported in the app — every request goes through here
-// so it always gets the base URL, the auth header, and the refresh retry.
 const client = axios.create({
   baseURL: getBaseURL(),
 });
+
+// setup/store.ts calls injectStore(store) right after creating it. A plain
+// `import { store } from './store'` here would create a real runtime import
+// cycle (store -> rootReducer -> authReducer -> this file -> store); only the
+// TYPES are imported above, which `import type` erases at compile time.
+let getState: (() => RootState) | null = null;
+let dispatch: AppDispatch | null = null;
+
+export const injectStore = (storeInstance: {
+  getState: () => RootState;
+  dispatch: AppDispatch;
+}): void => {
+  getState = storeInstance.getState;
+  dispatch = storeInstance.dispatch;
+};
 
 interface RetriableConfig extends InternalAxiosRequestConfig {
   _retried?: boolean;
 }
 
-// A single in-flight refresh promise so three parallel 401s trigger one refresh
-// rather than three that race and invalidate each other.
+// Shared so three parallel 401s trigger one refresh, not three.
 let refreshPromise: Promise<string> | null = null;
 
 client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const { accessToken } = store.getState().auth;
+  const accessToken = getState?.().auth.accessToken;
   if (accessToken) {
     config.headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+  // FormData is left alone — sanitizeInput's `for...in` can't see into it,
+  // so running it through would silently replace an upload with `{}`.
+  if (config.data && !(config.data instanceof FormData)) {
+    config.data = sanitizeInput(config.data);
+  }
+  if (config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
+  if (config.params) {
+    config.params = sanitizeInput(config.params);
   }
   return config;
 });
@@ -35,7 +59,6 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Marked before awaiting, so a failing refresh can't loop this request forever.
     originalConfig._retried = true;
 
     try {
@@ -48,20 +71,20 @@ client.interceptors.response.use(
       return client(originalConfig);
     } catch (refreshError) {
       refreshPromise = null;
-      store.dispatch(logout());
+      dispatch?.(logout());
       return Promise.reject(refreshError);
     }
   },
 );
 
-async function refreshAccessToken(): Promise<string> {
-  const { refreshToken } = store.getState().auth;
+const refreshAccessToken = async (): Promise<string> => {
+  const refreshToken = getState?.().auth.refreshToken;
   const response = await axios.post<{ accessToken: string; refreshToken: string }>(
     `${getBaseURL()}${ENDPOINTS.auth.refresh}`,
     { refreshToken },
   );
-  store.dispatch(setAuthTokens(response.data));
+  dispatch?.(setAuthTokens(response.data));
   return response.data.accessToken;
-}
+};
 
 export default client;

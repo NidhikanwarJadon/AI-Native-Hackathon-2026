@@ -1,6 +1,5 @@
-// HTTP response codes, compared against the Axios response status.
-// Not to be confused with setup/apiStatus.ts, whose ApiStatus enum is the
-// async lifecycle (idle / loading / succeeded / failed) that Redux slices use.
+// HTTP response codes. Not the same as setup/apiStatus.ts's ApiStatus enum,
+// which is the idle/loading/succeeded/failed lifecycle Redux slices use.
 const API_STATUS = {
   SUCCESS: 200,
   CREATED: 201,

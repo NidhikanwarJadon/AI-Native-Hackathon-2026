@@ -1,16 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { ApiStatus } from '../setup/apiStatus';
 import type { ScreenPermission } from '../constants/permissions';
 
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
-  // Read by useFetchAPI, which appends it to every dependency array so a role
-  // change refetches the screen's data.
   role: string | null;
   permissions: ScreenPermission[];
-  status: ApiStatus;
-  error: string | null;
 }
 
 const initialState: AuthState = {
@@ -18,37 +13,37 @@ const initialState: AuthState = {
   refreshToken: null,
   role: null,
   permissions: [],
-  status: ApiStatus.IDLE,
-  error: null,
 };
 
-interface AuthTokens {
+interface RefreshedTokens {
   accessToken: string;
   refreshToken: string;
-  role?: string;
-  permissions?: ScreenPermission[];
+}
+
+interface Session extends RefreshedTokens {
+  role: string;
+  permissions: ScreenPermission[];
 }
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setAuthTokens: (state, action: PayloadAction<AuthTokens>) => {
+    setAuthTokens: (state, action: PayloadAction<RefreshedTokens>) => {
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
-      state.role = action.payload.role ?? state.role;
-      state.permissions = action.payload.permissions ?? state.permissions;
-      state.status = ApiStatus.SUCCEEDED;
-      state.error = null;
     },
-    // Dispatched once, centrally, on logout — see setup/rootReducer.ts, which resets
-    // every slice back to its initialState when this action fires.
+    sessionStarted: (state, action: PayloadAction<Session>) => {
+      state.accessToken = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken;
+      state.role = action.payload.role;
+      state.permissions = action.payload.permissions;
+    },
+    // setup/rootReducer.ts matches every dispatched action's type against
+    // this one and, on a match, resets the entire store, not just auth.
     logout: () => initialState,
-    // Local reset, e.g. dispatched by a modal on close. Logout already covers the
-    // global wipe; this is here so every slice exports the same local-reset shape.
-    resetAuthState: () => initialState,
   },
 });
 
-export const { setAuthTokens, logout, resetAuthState } = authSlice.actions;
+export const { setAuthTokens, sessionStarted, logout } = authSlice.actions;
 export default authSlice.reducer;
