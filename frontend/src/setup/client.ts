@@ -1,8 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { ENDPOINTS } from '../api/endpoints';
-import { getBaseURL } from '../utility/getBaseURL';
 import { sanitizeInput } from '../utility/sanitize';
-import { setAuthTokens, logout } from '../reducers/authReducer';
+import { getBaseURL } from '../utility/getBaseURL';
+import { logout } from '../reducers/authReducer';
 import type { AppDispatch, RootState } from './store';
 
 const client = axios.create({
@@ -24,13 +23,6 @@ export const injectStore = (storeInstance: {
   dispatch = storeInstance.dispatch;
 };
 
-interface RetriableConfig extends InternalAxiosRequestConfig {
-  _retried?: boolean;
-}
-
-// Shared so three parallel 401s trigger one refresh, not three.
-let refreshPromise: Promise<string> | null = null;
-
 client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const accessToken = getState?.().auth.accessToken;
   if (accessToken) {
@@ -50,41 +42,55 @@ client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+interface FastApiValidationError {
+  loc?: Array<string | number>;
+  msg?: string;
+}
+
+// FastAPI's error body is {"detail": "message"} for a raised HTTPException, or
+// {"detail": [{"loc": [...], "msg": ...}, ...]} for a 422 validation error —
+// neither shape is what useFetchAPI reads (data.message / data.error). This
+// normalizes both into a plain `message` (and `error`, for the same reason)
+// so every existing and future module's error toast shows the real reason
+// instead of nothing, without each one having to know about `detail`.
+const normalizeFastApiError = (error: AxiosError): void => {
+  const data = error.response?.data;
+  if (!data || typeof data !== 'object' || !('detail' in data)) {
+    return;
+  }
+
+  const detail = (data as { detail: unknown }).detail;
+  const message = Array.isArray(detail)
+    ? (detail as FastApiValidationError[])
+        .map((item) => item.msg)
+        .filter(Boolean)
+        .join('; ')
+    : typeof detail === 'string'
+      ? detail
+      : undefined;
+
+  if (message) {
+    (data as Record<string, unknown>).message = message;
+    (data as Record<string, unknown>).error = message;
+  }
+};
+
 client.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    const originalConfig = error.config as RetriableConfig | undefined;
+  (error: AxiosError) => {
+    normalizeFastApiError(error);
 
-    if (error.response?.status !== 401 || !originalConfig || originalConfig._retried) {
-      return Promise.reject(error);
-    }
-
-    originalConfig._retried = true;
-
-    try {
-      if (!refreshPromise) {
-        refreshPromise = refreshAccessToken();
-      }
-      const accessToken = await refreshPromise;
-      refreshPromise = null;
-      originalConfig.headers.set('Authorization', `Bearer ${accessToken}`);
-      return client(originalConfig);
-    } catch (refreshError) {
-      refreshPromise = null;
+    // The backend has no refresh-token endpoint — a 401 always means "not
+    // authenticated" (bad credentials on login, or an expired/invalid token
+    // on a protected route), never "briefly retry with a new token". Either
+    // way the session is gone, so clear it; the login screen shows the
+    // login-attempt's own error message via the toast above, unaffected by
+    // this reset since it's a plain reducer action, not a redirect.
+    if (error.response?.status === 401) {
       dispatch?.(logout());
-      return Promise.reject(refreshError);
     }
+    return Promise.reject(error);
   },
 );
-
-const refreshAccessToken = async (): Promise<string> => {
-  const refreshToken = getState?.().auth.refreshToken;
-  const response = await axios.post<{ accessToken: string; refreshToken: string }>(
-    `${getBaseURL()}${ENDPOINTS.auth.refresh}`,
-    { refreshToken },
-  );
-  dispatch?.(setAuthTokens(response.data));
-  return response.data.accessToken;
-};
 
 export default client;

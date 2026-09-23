@@ -2,31 +2,36 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useFetchAPI from '../../../hooks/useFetchAPI';
 import { register } from '../api/authApi';
-import { useAppDispatch } from '../../../setup/store';
-import { sessionStarted } from '../../../reducers/authReducer';
-import type { RegisterRequest, AuthSessionResponse } from '../types/auth.types';
+import { showToastSuccess } from '../../../utility/common';
+import { enTranslation } from '../../../translations/enTranslation';
+import type { RegisterRequest } from '../types/auth.types';
 import type { RegisterFormValues } from '../schema/registerFormSchema';
 
+// All state and API-calling logic for the register screen lives here — the
+// component only renders.
+//
+// Registration does not log the user in — POST /api/auth/register only
+// creates the account and returns the new profile (no token). Logging in is
+// a separate call, so a successful register sends the user to /login rather
+// than starting a session here.
 const useRegister = () => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [submitPayload, setSubmitPayload] = useState<Partial<RegisterRequest>>({});
 
   const handleRegister = (values: RegisterFormValues) => {
     setSubmitPayload({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      email: values.email.toLowerCase(),
+      email: values.email,
       password: values.password,
+      full_name: values.fullName,
     });
   };
 
-  const successCb = (type: string, data: AuthSessionResponse) => {
+  const successCb = (type: string) => {
     switch (type) {
       case 'register': {
         setSubmitPayload({});
-        dispatch(sessionStarted(data));
-        navigate('/', { replace: true });
+        showToastSuccess(enTranslation.messages.registrationSucceeded);
+        navigate('/login', { replace: true });
         break;
       }
     }
@@ -35,6 +40,8 @@ const useRegister = () => {
   const failureCb = (type: string) => {
     switch (type) {
       case 'register': {
+        // The hook already toasts the failure (409 if the email is taken);
+        // just clear the payload so the next submit re-triggers the call.
         setSubmitPayload({});
         break;
       }
@@ -49,7 +56,7 @@ const useRegister = () => {
     defaultResponseValue: [],
     showSuccessMessage: false,
     hideErrorMesssage: false,
-    successCb: (data: AuthSessionResponse) => successCb('register', data),
+    successCb: () => successCb('register'),
     failureCb: () => failureCb('register'),
   });
 
