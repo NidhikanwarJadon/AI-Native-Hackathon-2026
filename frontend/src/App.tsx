@@ -1,14 +1,12 @@
-import { Route, Routes } from 'react-router-dom'
-import Home from './pages/Home'
-import NotFound from './pages/NotFound'
+import { Suspense } from 'react';
+import { useRoutes } from 'react-router-dom';
+import { routes } from './routers/routes';
 
+// Feature module routes are added to src/routers/routeList.ts as they land —
+// this shell stays the same, it just renders whatever routes exist.
 function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  )
+  const element = useRoutes(routes);
+  return <Suspense fallback={null}>{element}</Suspense>;
 }
 
-export default App
+export default App;
