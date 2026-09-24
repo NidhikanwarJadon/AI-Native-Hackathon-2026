@@ -12,7 +12,7 @@ Method and template for producing `docs/architecture.md`. The output is a **cont
 
 ## Fixed stack (don't re-decide this)
 
-The repo skeleton already commits to this. Design within it.
+The repo skeleton already commits to this. Design within it.uv add alembic      
 
 | Layer | Choice |
 |---|---|

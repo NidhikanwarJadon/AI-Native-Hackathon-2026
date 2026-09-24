@@ -9,7 +9,6 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import (
     TOKEN_TYPE_RESET,
@@ -18,8 +17,10 @@ from app.core.security import (
     decode_access_token,
     password_fingerprint,
 )
-from app.crud import user_crud
-from app.crud.user_crud import EmailAlreadyExistsError
+from app.crud import user_query
+from app.crud.user_query import EmailAlreadyExistsError
+
+from app.db.session import settings
 from app.schemas.user_schema import (
     ForgotPasswordRequest,
     MessageOut,
@@ -65,13 +66,13 @@ def _send_password_reset_email(email: str, reset_token: str) -> None:
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     """Create an account. 409 if the email is already registered."""
-    if user_crud.get_user_by_email(db, user_in.email) is not None:
+    if user_query.get_user_by_email(db, user_in.email) is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists",
         )
     try:
-        return user_crud.create_user(db, user_in)
+        return user_query.create_user(db, user_in)
     except EmailAlreadyExistsError:
         # Lost a race against a concurrent registration for the same email.
         raise HTTPException(
@@ -87,7 +88,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)) -> Token:
     401 on bad credentials (the message does not say which half was wrong),
     403 when the account exists but has been deactivated.
     """
-    user = user_crud.authenticate_user(db, credentials.email, credentials.password)
+    user = user_query.authenticate_user(db, credentials.email, credentials.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,7 +115,7 @@ def forgot_password(
     A token is only minted when the account exists, but the caller cannot tell:
     the response body, status code and shape are identical either way.
     """
-    user = user_crud.get_user_by_email(db, payload.email)
+    user = user_query.get_user_by_email(db, payload.email)
     if user is not None:
         reset_token = create_reset_token(user.id, user.hashed_password)
         _send_password_reset_email(user.email, reset_token)
@@ -142,7 +143,7 @@ def reset_password(
     except (TypeError, ValueError):
         raise _INVALID_RESET_TOKEN
 
-    user = user_crud.get_user(db, user_id)
+    user = user_query.get_user(db, user_id)
     if user is None or not user.is_active:
         raise _INVALID_RESET_TOKEN
 
@@ -150,5 +151,5 @@ def reset_password(
         # Already redeemed, or the password changed by another route since issue.
         raise _INVALID_RESET_TOKEN
 
-    user_crud.set_password(db, user, payload.new_password)
+    user_query.set_password(db, user, payload.new_password)
     return MessageOut(message="Your password has been reset. Please log in again.")

@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.core.database import SessionLocal
 from app.main import app
-from app.models.user_model import User
+from app.db.user_model import User
 
 
 @pytest.fixture()

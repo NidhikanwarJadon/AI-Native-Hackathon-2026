@@ -16,7 +16,7 @@ import jwt
 from jwt import PyJWTError
 from passlib.context import CryptContext
 
-from app.core.config import settings
+from app.db.session import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

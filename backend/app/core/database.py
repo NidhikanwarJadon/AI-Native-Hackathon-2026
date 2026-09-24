@@ -10,7 +10,7 @@ from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from app.core.config import settings
+from app.db.session import settings
 
 # pool_pre_ping avoids handing out connections the database has already dropped,
 # which otherwise shows up as a random failure after an idle period.
